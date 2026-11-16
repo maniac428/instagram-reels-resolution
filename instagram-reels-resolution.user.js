@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         인스타그램 릴스 해상도 표시
 // @namespace    local.instagram.reels.resolution
-// @version      1.2.0
+// @version      1.2.1
 // @description  릴스와 스토리에서 보고 있는 영상이나 사진의 해상도를 작게 표시합니다.
 // @match        https://www.instagram.com/*
 // @match        https://instagram.com/*
@@ -13,7 +13,8 @@
 (() => {
     'use strict';
 
-    const reelsPath = /^\/(?:reels(?:\/|$)|(?:[^/]+\/)?reel\/[^/]+(?:\/|$))/;
+    const reelsPath = /^\/(?:reels(?:\/|$)|(?:[^/]+\/)?reels?\/[^/]+(?:\/|$))/;
+    const postsPath = /^\/(?:[^/]+\/)?p\/[^/]+(?:\/|$)/;
     const storiesPath = /^\/stories\/[^/]+(?:\/\d+)?\/?$/;
     const storyHeaderGap = 10;
     const storyDefaultInset = 80;
@@ -47,13 +48,25 @@
         scheduleUpdate();
     }, { threshold: [0, 0.25, 0.5, 0.75, 1] });
 
-    function findVisibleMedia(isStory) {
+    function getMediaRoot() {
+        const dialogs = [...document.querySelectorAll('[role="dialog"]')];
+        for (const dialog of dialogs.reverse()) {
+            const rect = dialog.getBoundingClientRect();
+            if (rect.width <= 0 || rect.height <= 0 || rect.bottom <= 0 || rect.right <= 0) continue;
+            if (rect.top >= window.innerHeight || rect.left >= window.innerWidth) continue;
+            if (dialog.checkVisibility?.(visibilityOptions) === false) continue;
+            return dialog;
+        }
+        return document;
+    }
+
+    function findVisibleMedia(isStory, root) {
         const candidates = new Set();
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
         const centerX = viewportWidth / 2;
         let best = null;
-        for (const media of document.querySelectorAll(isStory ? 'video, img' : 'video')) {
+        for (const media of root.querySelectorAll(isStory ? 'video, img' : 'video')) {
             const rect = media.getBoundingClientRect();
             const left = Math.max(0, rect.left);
             const top = Math.max(0, rect.top);
@@ -112,14 +125,18 @@
         updateScheduled = false;
         const path = location.pathname;
         const isStory = storiesPath.test(path);
-        if (!isStory && !reelsPath.test(path)) {
+        const root = getMediaRoot();
+        // 검색·탐색 결과는 /p/ 주소 또는 기존 검색 주소 위의 팝업으로 열릴 수 있습니다.
+        const isVideoViewer = reelsPath.test(path) || postsPath.test(path) ||
+            (root !== document && root.querySelector('video'));
+        if (!isStory && !isVideoViewer) {
             observer.disconnect();
             intersections.clear();
             badge.remove();
             return;
         }
 
-        const active = findVisibleMedia(isStory);
+        const active = findVisibleMedia(isStory, root);
         if (!active || (!active.isVideo && !active.media.complete)) {
             badge.remove();
             return;
@@ -144,9 +161,6 @@
 
     function scheduleUpdate() {
         if (updateScheduled || document.hidden) return;
-        const path = location.pathname;
-        if (!intersections.size && !reelsPath.test(path) && !storiesPath.test(path)) return;
-
         updateScheduled = true;
         requestAnimationFrame(update);
     }

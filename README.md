@@ -6,6 +6,8 @@
 
 인스타그램 웹에서 릴스와 스토리의 해상도를 `1080 × 1920`처럼 작게 표시하는 Tampermonkey 스크립트입니다. 동영상 해상도가 바뀌거나 다음 스토리로 넘어가면 자동으로 갱신됩니다. 스토리에서는 배지가 상단 버튼 아래에 맞춰집니다.
 
+검색·탐색에서 연 영상 게시물(`/p/`)과 동영상 팝업에서도 표시됩니다. 팝업에서는 그 안의 영상을 우선합니다.
+
 1. [Tampermonkey](https://www.tampermonkey.net/)를 설치합니다.
 2. [스크립트 파일](instagram-reels-resolution.user.js)을 열고 **Raw**를 눌러 전체 코드를 복사합니다.
 3. Tampermonkey에서 **새 스크립트 만들기**를 열고 기본 코드를 지운 뒤 붙여넣습니다. 기존 버전이 있다면 그 스크립트의 코드를 교체합니다.
@@ -18,6 +20,8 @@
 ## English
 
 A Tampermonkey script that displays the resolution of Instagram Reels and Stories on the web in a small badge such as `1080 × 1920`. It updates when the video resolution changes or you move to the next story. On Stories, the badge sits below the top controls.
+
+Also supports video posts opened from Search or Explore (`/p/`) and video dialogs. While a dialog is open, the badge follows the video inside it.
 
 1. Install [Tampermonkey](https://www.tampermonkey.net/).
 2. Open the [userscript](instagram-reels-resolution.user.js), click **Raw**, and copy the full code.
